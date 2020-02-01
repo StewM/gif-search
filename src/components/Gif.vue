@@ -1,5 +1,5 @@
 <template>
-    <v-flex xs12 md4>
+    <v-flex xs12 md4 class="center" mb-2>
         <video :src="gif.images.looping.mp4" type="video/mp4" autoplay loop @click="copyLink(gif.bitly_url)"></video>
     </v-flex>
 </template>
@@ -45,5 +45,11 @@ export default {
 
     .hidden{
         display: none;
+    }
+
+    .center{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 </style>

@@ -14,11 +14,17 @@
           ></v-text-field>
         </v-flex>
       </v-layout>
-      <v-layout wrap>
-        <v-flex xs12 v-if="loading">
-          <v-progress-linear indeterminate></v-progress-linear>
+      <v-layout wrap ma-2>
+        <v-flex xs12>
+          <v-sheet elevation="3" color="grey lighten-3">
+            <v-layout wrap pa-2 ma-2>
+              <v-flex xs12 v-if="loading">
+                <v-progress-linear indeterminate></v-progress-linear>
+              </v-flex>
+              <Gif v-for="gif in gifs" :key="gif.id" :gif="gif" v-on:copied-to-clipboard="notifyCopied()"></Gif>
+            </v-layout>
+          </v-sheet>
         </v-flex>
-        <Gif v-for="gif in gifs" :key="gif.id" :gif="gif" v-on:copied-to-clipboard="notifyCopied()"></Gif>
       </v-layout>
       <v-layout text-center wrap v-if="searched">
         <v-flex xs12>
