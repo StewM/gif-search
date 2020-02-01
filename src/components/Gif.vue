@@ -1,6 +1,6 @@
 <template>
     <v-flex xs12 md4 class="center" mb-2>
-        <video :src="gif.images.looping.mp4" type="video/mp4" autoplay loop @click="copyLink(gif.bitly_url)"></video>
+        <video :src="gif.images.looping.mp4" type="video/mp4" autoplay loop muted @click="copyLink(gif.bitly_url)"></video>
     </v-flex>
 </template>
 
