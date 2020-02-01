@@ -1,60 +1,154 @@
 <template>
   <v-app>
-    <v-app-bar
-      app
-      color="primary"
-      dark
-    >
-      <div class="d-flex align-center">
-        <v-img
-          alt="Vuetify Logo"
-          class="shrink mr-2"
-          contain
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
-          transition="scale-transition"
-          width="40"
-        />
-
-        <v-img
-          alt="Vuetify Name"
-          class="shrink mt-1 hidden-sm-and-down"
-          contain
-          min-width="100"
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-name-dark.png"
-          width="100"
-        />
-      </div>
-
-      <v-spacer></v-spacer>
+    <v-container>
+      <v-layout text-center wrap>
+        <v-flex xs12>
+          <h1>GIF Search</h1>
+        </v-flex>
+        <v-flex xs12>
+          <v-text-field
+            solo 
+            placeholder="Search here"
+            v-model="search"
+            @input="debouncedSearch()"
+          ></v-text-field>
+        </v-flex>
+      </v-layout>
+      <v-layout wrap>
+        <v-flex xs12 v-if="loading">
+          <v-progress-linear indeterminate></v-progress-linear>
+        </v-flex>
+        <Gif v-for="gif in gifs" :key="gif.id" :gif="gif" v-on:copied-to-clipboard="notifyCopied()"></Gif>
+      </v-layout>
+      <v-layout text-center wrap v-if="searched">
+        <v-flex xs12>
+          <v-btn @click="loadMore()">Load More</v-btn>
+        </v-flex>
+      </v-layout>
 
       <v-btn
-        href="https://github.com/vuetifyjs/vuetify/releases/latest"
-        target="_blank"
-        text
-      >
-        <span class="mr-2">Latest Release</span>
-        <v-icon>mdi-open-in-new</v-icon>
-      </v-btn>
-    </v-app-bar>
+            v-scroll="onScroll"
+            v-show="fab"
+            fab
+            dark
+            fixed
+            bottom
+            right
+            color="primary"
+            @click="toTop"
+          >
+            <v-icon>mdi-chevron-up</v-icon>
+          </v-btn>
+    </v-container>
 
-    <v-content>
-      <HelloWorld/>
-    </v-content>
+    <v-snackbar
+      v-model="snackbar"
+      bottom
+      :timeout=3000
+    >
+      {{ snackbarText }}
+      <v-btn flat @click="snackbar = false">Close</v-btn>
+    </v-snackbar>
   </v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld';
+import Gif from './components/Gif';
+import axios from 'axios';
+import _ from 'lodash';
 
 export default {
   name: 'App',
 
   components: {
-    HelloWorld,
+    Gif,
   },
 
   data: () => ({
-    //
+    gifs: [],
+    loading: true,
+    searched: false,
+    search: '',
+    snackbar: false,
+    snackbarText: "Snackbar",
+    offset: 0,
+    fab: false
   }),
+
+  methods: {
+    debouncedSearch: _.debounce( function () {
+      this.offset = 0;
+      this.searchGif(false);
+    }, 500),
+    searchGif: function (append) {
+      if(this.search != ''){
+        this.loading = true;
+
+        axios.get('https://api.giphy.com/v1/gifs/search', {
+          params: {
+            api_key: process.env.VUE_APP_GIPHY_KEY,
+            q: this.search,
+            limit: 9,
+            offset: this.offset
+          }
+        })
+        .then( response => {
+          if (append){
+            this.gifs = this.gifs.concat(response.data.data);
+          } else {
+            this.gifs = response.data.data;
+          }
+          this.searched = true;
+          this.loading = false;
+        }).catch( error => {
+          if(error.response && error.response.status == 429){
+            this.snackbarText = "I'm sorry, you've hit the API limit. Please try again later."
+          } else {
+            this.snackbarText = "I'm sorry, an error has occured"
+          }
+          this.snackbar = true;
+          this.loading = false;
+        })
+      }
+    },
+    notifyCopied: function () {
+      this.snackbarText = "Copied to clipboard!";
+      this.snackbar = true;
+    },
+    loadMore: function () {
+      this.offset += 9;
+      this.searchGif(true);
+    },
+    onScroll: function (e) {
+      if (typeof window === 'undefined') return
+      const top = window.pageYOffset ||   e.target.scrollTop || 0
+      this.fab = top > 20
+    },
+    toTop: function () {
+      this.$vuetify.goTo(0)
+    }
+  },
+
+  mounted: function () {
+    // get featured gifs on page load
+    axios.get('https://api.giphy.com/v1/gifs/trending', {
+      params: {
+        api_key: process.env.VUE_APP_GIPHY_KEY,
+        limit: 3
+      }
+    })
+    .then( response => {
+      this.gifs = response.data.data;
+      this.loading = false;
+    }).catch( error => {
+      if(error.response && error.response.status == 429){
+        this.snackbarText = "I'm sorry, you've hit the API limit. Please try again later."
+      } else {
+        this.snackbarText = "I'm sorry, an error has occured"
+      }
+      this.snackbar = true;
+      this.loading = false;
+    })
+  }
 };
 </script>
