@@ -1,4 +1,5 @@
 # gif-search
+A simple animated gif search built in VueJS using the Giphy API. Type in the search bar to search, click a gif to copy a link to it.
 
 ## Project setup
 ```
@@ -19,6 +20,3 @@ npm run build
 ```
 npm run lint
 ```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
